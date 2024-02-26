@@ -440,11 +440,11 @@ systemctl start elasticsearch.service
 ./expect/reset-kibana-system-password "${KIBSPASS}"
 
 #Create a role for the internal Logstash user for Elasticsearch, together with the user itself
-LOGIROLE_RESP=$(curl --silent --output  -X POST "https://127.0.0.1:9200/_security/role/logstash_writer" -u "elastic:${SUPPASS}" --cacert "${DEFDIR}ssl/ca/ca.crt" -H "Content-Type: application/json" -d '{ "cluster": ["manage_index_templates", "monitor", "manage_ilm"], "indices": [ { "names": [ "*" ], "privileges": ["write","create","create_index","manage","manage_ilm"] } ] }')
+LOGIROLE_RESP=$(curl --output  -X POST "https://127.0.0.1:9200/_security/role/logstash_writer" -u "elastic:${SUPPASS}" --cacert "${DEFDIR}ssl/ca/ca.crt" -H "Content-Type: application/json" -d '{ "cluster": ["manage_index_templates", "monitor", "manage_ilm"], "indices": [ { "names": [ "*" ], "privileges": ["write","create","create_index","manage","manage_ilm"] } ] }')
 
 if [[ "${LOGIROLE_RESP}" == *"true"* ]]; then
     infu "Logstash writer role succesfully created"
-    LOGIUSER_RESP=$(curl --silent --output  -X POST "https://127.0.0.1:9200/_security/user/logstash_internal" -u "elastic:${SUPPASS}" --cacert "${DEFDIR}ssl/ca/ca.crt" -H "Content-Type: application/json" -d "{ \"password\" : \"${LOGIPASS}\", \"roles\" : [ \"logstash_writer\"], \"full_name\" : \"Internal Logstash User\" }")
+    LOGIUSER_RESP=$(curl --output  -X POST "https://127.0.0.1:9200/_security/user/logstash_internal" -u "elastic:${SUPPASS}" --cacert "${DEFDIR}ssl/ca/ca.crt" -H "Content-Type: application/json" -d "{ \"password\" : \"${LOGIPASS}\", \"roles\" : [ \"logstash_writer\"], \"full_name\" : \"Internal Logstash User\" }")
     if [[ "${LOGIROLE_RESP}" == *"true"* ]]; then
         infu "Logstash internal user succesfully created"
     else
@@ -517,7 +517,7 @@ infu "Kibana API is now available!"
 sleep 10
 
 #create a Windows agent policy
-WINPLC_RESP=$(curl --silent --output /dev/null -X POST "https://${IPADDR}:${KIBPORT}/api/fleet/agent_policies?sys_monitoring=true" --cacert "${DEFDIR}ssl/ca/ca.crt" -u "elastic:${SUPPASS}" -H "Content-Type: application/json" -H "kbn-xsrf: true" -d '{ "name": "windows-agents-default", "description": "The default policy to for use with Windows Elastic Agents", "namespace": "default", "monitoring_enabled": ["logs", "metrics"], "inactivity_timeout": 1209600, "is_protected": false}')
+WINPLC_RESP=$(curl -X POST "https://${IPADDR}:${KIBPORT}/api/fleet/agent_policies?sys_monitoring=true" --cacert "${DEFDIR}ssl/ca/ca.crt" -u "elastic:${SUPPASS}" -H "Content-Type: application/json" -H "kbn-xsrf: true" -d '{ "name": "windows-agents-default", "description": "The default policy to for use with Windows Elastic Agents", "namespace": "default", "monitoring_enabled": ["logs", "metrics"], "inactivity_timeout": 1209600, "is_protected": false}')
 if [[ "${WINPLC_RESP}" == *"\"updated_by\":"* ]]; then
     infu "Windows agent policy succesfully created"
 else
@@ -526,7 +526,7 @@ fi
 echo "${WINPLC_RESP}"
 
 #create a Linux agent policy
-LNXPLC_RESP=$(curl --silent --output /dev/null -X POST "https://${IPADDR}:${KIBPORT}/api/fleet/agent_policies?sys_monitoring=true" --cacert "${DEFDIR}ssl/ca/ca.crt" -u "elastic:${SUPPASS}" -H "Content-Type: application/json" -H "kbn-xsrf: true" -d '{ "name": "linux-agents-default", "description": "The default policy to for use with Linux Elastic Agents", "namespace": "default", "monitoring_enabled": ["logs", "metrics"], "inactivity_timeout": 1209600, "is_protected": false}')
+LNXPLC_RESP=$(curl -X POST "https://${IPADDR}:${KIBPORT}/api/fleet/agent_policies?sys_monitoring=true" --cacert "${DEFDIR}ssl/ca/ca.crt" -u "elastic:${SUPPASS}" -H "Content-Type: application/json" -H "kbn-xsrf: true" -d '{ "name": "linux-agents-default", "description": "The default policy to for use with Linux Elastic Agents", "namespace": "default", "monitoring_enabled": ["logs", "metrics"], "inactivity_timeout": 1209600, "is_protected": false}')
 if [[ "${LNXPLC_RESP}" == *"\"updated_by\":"* ]]; then
     infu "Linux agent policy succesfully created"
 else
@@ -535,15 +535,15 @@ fi
 echo "${LNXPLC_RESP}"
 
 #get the policy IDs
-WINPLC_ID=$(curl --silent --output /dev/null -u "elastic:${SUPPASS}" --cacert "${DEFDIR}ssl/ca/ca.crt" "https://${IPADDR}:${KIBPORT}/api/fleet/agent_policies" | jq -r '.items[] | select(.name == "windows-agents-default") | .id')
-LNXPLC_ID=$(curl --silent --output /dev/null -u "elastic:${SUPPASS}" --cacert "${DEFDIR}ssl/ca/ca.crt" "https://${IPADDR}:${KIBPORT}/api/fleet/agent_policies" | jq -r '.items[] | select(.name == "linux-agents-default") | .id')
+WINPLC_ID=$(curl -u "elastic:${SUPPASS}" --cacert "${DEFDIR}ssl/ca/ca.crt" "https://${IPADDR}:${KIBPORT}/api/fleet/agent_policies" | jq -r '.items[] | select(.name == "windows-agents-default") | .id')
+LNXPLC_ID=$(curl -u "elastic:${SUPPASS}" --cacert "${DEFDIR}ssl/ca/ca.crt" "https://${IPADDR}:${KIBPORT}/api/fleet/agent_policies" | jq -r '.items[] | select(.name == "linux-agents-default") | .id')
 
 #replace the policy IDs for the integration add templates
 sed -i "/policy_id/c\\  \"policy_id\": \"${WINPLC_ID}\"," "./api-requests/add-windows-integration"
 sed -i "/policy_id/c\\  \"policy_id\": \"${LNXPLC_ID}\"," "./api-requests/add-linux-auditd-integration"
 
 #add the Windows integration to the agent policy
-WININT1_RESPT=$(curl --silent --output /dev/null -X POST "https://${IPADDR}:${KIBPORT}/api/fleet/package_policies" --cacert "${DEFDIR}ssl/ca/ca.crt" -u "elastic:${SUPPASS}" -H "Content-Type: application/json" -H "kbn-xsrf: true" --data "@./api-requests/add-windows-integration")
+WININT1_RESPT=$(curl -X POST "https://${IPADDR}:${KIBPORT}/api/fleet/package_policies" --cacert "${DEFDIR}ssl/ca/ca.crt" -u "elastic:${SUPPASS}" -H "Content-Type: application/json" -H "kbn-xsrf: true" --data "@./api-requests/add-windows-integration")
 if [[ "${WININT1_RESPT}" == *"\"updated_by\":"* ]]; then
     infu "Windows integration succesfully added to agent policy"
 else
@@ -552,7 +552,7 @@ fi
 echo "${WININT1_RESPT}"
 
 #add the Linux Auditd integration to the agent policy
-LNXINT1_RESPT=$(curl --silent --output /dev/null -X POST "https://${IPADDR}:${KIBPORT}/api/fleet/package_policies" --cacert "${DEFDIR}ssl/ca/ca.crt" -u "elastic:${SUPPASS}" -H "Content-Type: application/json" -H "kbn-xsrf: true" --data "@./api-requests/add-linux-auditd-integration")
+LNXINT1_RESPT=$(curl -X POST "https://${IPADDR}:${KIBPORT}/api/fleet/package_policies" --cacert "${DEFDIR}ssl/ca/ca.crt" -u "elastic:${SUPPASS}" -H "Content-Type: application/json" -H "kbn-xsrf: true" --data "@./api-requests/add-linux-auditd-integration")
 if [[ "${LNXINT1_RESPT}" == *"\"updated_by\":"* ]]; then
     infu "Linux Auditd integration succesfully added to agent policy"
 else
