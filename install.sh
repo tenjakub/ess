@@ -329,7 +329,7 @@ case "${DISTRO}" in
         sudo dnf update -y -q
         sudo dnf install elasticsearch -y -q
         sudo dnf install kibana -y -q
-        sudo dnf install logstash -y
+        sudo dnf install logstash -y -q
     ;;
     debian) 
         sudo apt-get update -y
