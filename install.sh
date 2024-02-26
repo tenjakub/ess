@@ -514,6 +514,7 @@ while [ "${KIBSTATUS_REPEAT}" -eq "1" ]; do
 done
 
 infu "Kibana API is now available!"
+sleep 10
 
 #create a Windows agent policy
 WINPLC_RESP=$(curl --silent --output /dev/null -X POST "https://${IPADDR}:${KIBPORT}/api/fleet/agent_policies?sys_monitoring=true" --cacert "${DEFDIR}ssl/ca/ca.crt" -u "elastic:${SUPPASS}" -H "Content-Type: application/json" -H "kbn-xsrf: true" -d '{ "name": "windows-agents-default", "description": "The default policy to for use with Windows Elastic Agents", "namespace": "default", "monitoring_enabled": ["logs", "metrics"], "inactivity_timeout": 1209600, "is_protected": false}')
@@ -522,6 +523,7 @@ if [[ "${WINPLC_RESP}" == *"\"updated_by\":"* ]]; then
 else
     infu "ERROR: Windows agent policy has NOT been created"
 fi
+echo "${WINPLC_RESP}"
 
 #create a Linux agent policy
 LNXPLC_RESP=$(curl --silent --output /dev/null -X POST "https://${IPADDR}:${KIBPORT}/api/fleet/agent_policies?sys_monitoring=true" --cacert "${DEFDIR}ssl/ca/ca.crt" -u "elastic:${SUPPASS}" -H "Content-Type: application/json" -H "kbn-xsrf: true" -d '{ "name": "linux-agents-default", "description": "The default policy to for use with Linux Elastic Agents", "namespace": "default", "monitoring_enabled": ["logs", "metrics"], "inactivity_timeout": 1209600, "is_protected": false}')
@@ -530,6 +532,7 @@ if [[ "${LNXPLC_RESP}" == *"\"updated_by\":"* ]]; then
 else
     infu "ERROR: Linux agent policy has NOT been created"
 fi
+echo "${LNXPLC_RESP}"
 
 #get the policy IDs
 WINPLC_ID=$(curl --silent --output /dev/null -u "elastic:${SUPPASS}" --cacert "${DEFDIR}ssl/ca/ca.crt" "https://${IPADDR}:${KIBPORT}/api/fleet/agent_policies" | jq -r '.items[] | select(.name == "windows-agents-default") | .id')
@@ -546,6 +549,7 @@ if [[ "${WININT1_RESPT}" == *"\"updated_by\":"* ]]; then
 else
     infu "ERROR: Windows integration has NOT been added to agent policy"
 fi
+echo "${WININT1_RESPT}"
 
 #add the Linux Auditd integration to the agent policy
 LNXINT1_RESPT=$(curl --silent --output /dev/null -X POST "https://${IPADDR}:${KIBPORT}/api/fleet/package_policies" --cacert "${DEFDIR}ssl/ca/ca.crt" -u "elastic:${SUPPASS}" -H "Content-Type: application/json" -H "kbn-xsrf: true" --data "@./api-requests/add-linux-auditd-integration")
@@ -554,6 +558,7 @@ if [[ "${LNXINT1_RESPT}" == *"\"updated_by\":"* ]]; then
 else
     infu "ERROR: Linux Auditd integration has NOT been added to agent policy"
 fi
+echo "${LNXINT1_RESPT}"
 
 #enable the services, if the user chose to do so
 if [[ "${AUTOSTART}" -eq "1" ]]; then
@@ -565,12 +570,12 @@ fi
 #Inform the user about the succesful completion of the script
 whiptail --title "INSTALLATION SUCCESFULL" --msgbox "The script has succesfully completed the Elastic SIEM installation process. Check if the software works fine, or use the official documentation to fix any problems." 9 78
 infu "The istallation has succesfully completed!"
-echo "==============================================================================================================================================================="
+echo "============================================================================================"
 infu "The application web interface is now available at https://${IPADDR}:${KIBPORT}"
 infu "Make sure to enable ports 5044, 5055 and ${KIBPORT} on this machine's firewall!"
 infu "For full functionality of the system, security rules have to be imported manually. Please refer to the included documentation in the README.md file or the official documentation."
 infu "Elastic Agents manual installation process can also be found in the included documentation in the README.md file or the official documentation"
-echo "==============================================================================================================================================================="
+echo "============================================================================================"
 echo "Here you can see the passwords for the system internal passwords. THIS IS THE ONLY TIME THEY WILL BE SHOWN TO YOU. It is advised to copy them to a secure location, so that you can use them if you need to."
 echo "KIBANA SYSTEM PASSWORD: ${KIBSPASS}"
 echo "LOGSTASH INTERNAL PASSWORD: ${LOGIPASS}"
