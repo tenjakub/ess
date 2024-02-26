@@ -1,2 +1,1 @@
-# ess
-Instalační skript pro instalaci Elastic SIEM
+stuff yet to be written here
