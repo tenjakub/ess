@@ -29,6 +29,9 @@ KIBCONF=/etc/kibana/kibana.yml
 #define the logstash paths
 LGSTPATH=/etc/logstash/
 
+#set up the error count vaue
+ERRORCNT=0
+
 #define custom functions
 
 #log status output to both terminal and logfile
@@ -379,7 +382,9 @@ repdir "ca" "${DEFDIR}ssl/" "${RSVDIR}"
 /usr/share/elasticsearch/bin/elasticsearch-certutil ca --out "${DEFDIR}ssl/es-ca.zip" --pem -s
 unzip -qq "${DEFDIR}ssl/es-ca.zip" -d "${DEFDIR}ssl/"
 rm -f "${DEFDIR}ssl/es-ca.zip"
-infu "Created a certificate authority"
+if [[ -f "${DEFDIR}ssl/ca/ca.crt" && -f "${DEFDIR}ssl/ca/ca.key" ]]; then
+        infu "Created a certificate authority"
+fi
 
 #generate certificates for elasticsearch
 /usr/share/elasticsearch/bin/elasticsearch-certutil cert --ca-cert "${DEFDIR}ssl/ca/ca.crt" --ca-key "${DEFDIR}ssl/ca/ca.key" --days 1826 --name es-http --out "${DEFDIR}ssl/es-http.zip" --ip "${IPADDR}",127.0.0.1 --pem -s
@@ -387,7 +392,12 @@ unzip -qq "${DEFDIR}ssl/es-http.zip" -d "${DEFDIR}ssl/"
 rm -f "${DEFDIR}ssl/es-http.zip"
 mv "${DEFDIR}ssl/es-http/"* /etc/elasticsearch/certs/
 rmdir "${DEFDIR}ssl/es-http/"
-infu "Generated Elasticsearch certificates"
+if [[ -f "${ESPATH}certs/es-http.crt" && -f "${ESPATH}certs/es-http.key" ]]; then
+        infu "Generated Elasticsearch certificates"
+else
+        infu "ERROR: Elasticsearch certificates have NOT been generated"
+        ERRORCNT=$((${ERRORCNT}+1))
+fi
 
 #generate certificates for kibana
 /usr/share/elasticsearch/bin/elasticsearch-certutil cert --ca-cert "${DEFDIR}ssl/ca/ca.crt" --ca-key "${DEFDIR}ssl/ca/ca.key" --days 1826 --name kibana-server --out "${DEFDIR}ssl/kibana-server.zip" --ip "${IPADDR}" --pem -s
@@ -396,7 +406,12 @@ rm -f "${DEFDIR}ssl/kibana-server.zip"
 mv "${DEFDIR}ssl/kibana-server/"* /etc/kibana/certs/
 rmdir "${DEFDIR}ssl/kibana-server/"
 cp "${DEFDIR}ssl/ca/ca.crt" /etc/kibana/certs
-infu "Generated Kibana certificates"
+if [[ -f "${KIBPATH}certs/kibana-server.crt" && -f "${KIBPATH}certs/kibana-server.key" ]]; then
+        infu "Generated Kibana certificates"
+else
+        infu "ERROR: Kibana certificates have NOT been generated"
+        ERRORCNT=$((${ERRORCNT}+1))
+fi
 
 #modify the kibana configuration file
 KIBCA=["\"${KIBPATH}certs/ca.crt\""]
@@ -452,9 +467,11 @@ if [[ "${LOGIROLE_RESP}" == *"true"* ]]; then
         infu "Logstash internal user succesfully created"
     else
         infu "ERROR: Logstash internal user has NOT been created"
+        ERRORCNT=$((${ERRORCNT}+1))
     fi
 else
     infu "ERROR: Logstash writer role has NOT been created"
+    ERRORCNT=$((${ERRORCNT}+1))
 fi
 
 #create logstash and agent transport certificates
@@ -463,11 +480,23 @@ unzip -qq "${DEFDIR}ssl/logstash-input.zip" -d "${DEFDIR}ssl/"
 mv "${DEFDIR}ssl/logstash-input/"* /etc/logstash/certs
 rm -f "${DEFDIR}ssl/logstash-input.zip"
 cp "${DEFDIR}ssl/ca/ca.crt" /etc/logstash/certs
+if [[ -f "${LGSTPATH}certs/logstash-input.crt" && -f "${LGSTPATH}certs/logstash-input.key" ]]; then
+        infu "Generated Logstash certificates"
+else
+        infu "ERROR: Logstash certificates have NOT been generated"
+        ERRORCNT=$((${ERRORCNT}+1))
+    fi
 
 /usr/share/elasticsearch/bin/elasticsearch-certutil cert --ca-cert "${DEFDIR}ssl/ca/ca.crt" --ca-key "${DEFDIR}ssl/ca/ca.key" --days 1826 --name es-agent --out "${DEFDIR}ssl/agents/es-agent.zip" --pem -s
 unzip -qq "${DEFDIR}ssl/agents/es-agent.zip" -d "${DEFDIR}ssl/agents/"
 rm -f "${DEFDIR}ssl/agents/es-agent.zip"
 cp "${DEFDIR}ssl/ca/ca.crt" "${DEFDIR}ssl/agents/es-agent"
+if [[ -f "${DEFDIR}ssl/agents/es-agent/es-agent.crt" && -f "${DEFDIR}ssl/agents/es-agent/es-agent.crt" ]]; then
+        infu "Generated Agent certificates"
+else
+        infu "ERROR: Agent certificates have NOT been generated"
+        ERRORCNT=$((${ERRORCNT}+1))
+fi
 
 #create the logstash keystore
 if [ ! -e "${LGSTPATH}"logstash.keystore ]; then
@@ -526,6 +555,7 @@ if [[ "${WINPLC_RESP}" == *"\"updated_by\":"* ]]; then
     infu "Windows agent policy succesfully created"
 else
     infu "ERROR: Windows agent policy has NOT been created"
+    ERRORCNT=$((${ERRORCNT}+1))
 fi
 
 #create a Linux agent policy
@@ -534,6 +564,7 @@ if [[ "${LNXPLC_RESP}" == *"\"updated_by\":"* ]]; then
     infu "Linux agent policy succesfully created"
 else
     infu "ERROR: Linux agent policy has NOT been created"
+    ERRORCNT=$((${ERRORCNT}+1))
 fi
 
 #get the policy IDs
@@ -550,6 +581,7 @@ if [[ "${WININT1_RESPT}" == *"\"updated_by\":"* ]]; then
     infu "Windows integration succesfully added to agent policy"
 else
     infu "ERROR: Windows integration has NOT been added to agent policy"
+    ERRORCNT=$((${ERRORCNT}+1))
 fi
 
 #add the Linux Auditd integration to the agent policy
@@ -558,6 +590,7 @@ if [[ "${LNXINT1_RESPT}" == *"\"updated_by\":"* ]]; then
     infu "Linux Auditd integration succesfully added to agent policy"
 else
     infu "ERROR: Linux Auditd integration has NOT been added to agent policy"
+    ERRORCNT=$((${ERRORCNT}+1))
 fi
 
 #enable the services, if the user chose to do so
@@ -568,7 +601,12 @@ if [[ "${AUTOSTART}" -eq "1" ]]; then
 fi
 
 #Inform the user about the succesful completion of the script
-whiptail --title "INSTALLATION SUCCESFULL" --msgbox "The script has succesfully completed the Elastic SIEM installation process. Check if the software works fine, or use the official documentation to fix any problems." 9 78
+if [ ! ${ERRORCNT} -eq 0 ]; then
+    ENCERRORS="WARNING: The installation encountered ${ERRORCNT} errors during the installation process. Check the ${LOGFILE} file and refer to the official documentation."
+else
+    ENCERRORS=""
+fi
+whiptail --title "INSTALLATION SUCCESFULL" --msgbox "The script has succesfully completed the Elastic SIEM installation process. Check if the software works fine, or use the official documentation to fix any problems.\n${ENCERRORS}" 12 78
 infu "The istallation has succesfully completed!"
 echo "============================================================================================"
 infu "The application web interface is now available at https://${IPADDR}:${KIBPORT}"
