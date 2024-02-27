@@ -439,6 +439,9 @@ systemctl start elasticsearch.service
 #reset the kibana system user password
 ./expect/reset-kibana-system-password "${KIBSPASS}"
 
+#the Elasticsearch API is usually available instantly, but for safety let the script wait and make sure it is ready
+sleep 5
+
 #Create a role for the internal Logstash user for Elasticsearch, together with the user itself
 LOGIROLE_RESP=$(curl --output  -X POST "https://127.0.0.1:9200/_security/role/logstash_writer" -u "elastic:${SUPPASS}" --cacert "${DEFDIR}ssl/ca/ca.crt" -H "Content-Type: application/json" -d '{ "cluster": ["manage_index_templates", "monitor", "manage_ilm"], "indices": [ { "names": [ "*" ], "privileges": ["write","create","create_index","manage","manage_ilm"] } ] }')
 
@@ -514,7 +517,7 @@ while [ "${KIBSTATUS_REPEAT}" -eq "1" ]; do
 done
 
 infu "Kibana API is now available!"
-#wait for some time, as there might be a delay for the API even if it is available
+#wait for some time, as there usually still is a small delay for the API even if it is available
 sleep 10
 
 #create a Windows agent policy
