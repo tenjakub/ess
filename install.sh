@@ -536,7 +536,7 @@ infu "starting Kibana"
 while [ "${KIBSTATUS_REPEAT}" -eq "1" ]; do
   if [ $(date +%s) -lt $((KIBSTATUS_START + KIBSTATUS_TIMEOUT)) ]; then
     if ! curl --fail --silent --output /dev/null -u "elastic:${SUPPASS}" --cacert "${DEFDIR}ssl/ca/ca.crt" "https://${IPADDR}:${KIBPORT}"; then
-      sleep 5
+      sleep 15
     else
       KIBSTATUS_REPEAT=0
     fi
@@ -546,17 +546,8 @@ while [ "${KIBSTATUS_REPEAT}" -eq "1" ]; do
 done
 
 infu "Kibana API is now available!"
-#wait for some time, as there usually still is a small delay for the API even if it is available
-sleep 10
-
-#create a Windows agent policy
-WINPLC_RESP=$(curl -X POST "https://${IPADDR}:${KIBPORT}/api/fleet/agent_policies?sys_monitoring=true" --cacert "${DEFDIR}ssl/ca/ca.crt" -u "elastic:${SUPPASS}" -H "Content-Type: application/json" -H "kbn-xsrf: true" -d '{ "name": "windows-agents-default", "description": "The default policy to for use with Windows Elastic Agents", "namespace": "default", "monitoring_enabled": ["logs", "metrics"], "inactivity_timeout": 1209600, "is_protected": false}')
-if [[ "${WINPLC_RESP}" == *"\"updated_by\":"* ]]; then
-    infu "Windows agent policy succesfully created"
-else
-    infu "ERROR: Windows agent policy has NOT been created"
-    ERRORCNT=$((${ERRORCNT}+1))
-fi
+#wait for some time, as there usually still is a delay for the API even if it is available
+sleep 20
 
 #create a Linux agent policy
 LNXPLC_RESP=$(curl -X POST "https://${IPADDR}:${KIBPORT}/api/fleet/agent_policies?sys_monitoring=true" --cacert "${DEFDIR}ssl/ca/ca.crt" -u "elastic:${SUPPASS}" -H "Content-Type: application/json" -H "kbn-xsrf: true" -d '{ "name": "linux-agents-default", "description": "The default policy to for use with Linux Elastic Agents", "namespace": "default", "monitoring_enabled": ["logs", "metrics"], "inactivity_timeout": 1209600, "is_protected": false}')
@@ -564,6 +555,15 @@ if [[ "${LNXPLC_RESP}" == *"\"updated_by\":"* ]]; then
     infu "Linux agent policy succesfully created"
 else
     infu "ERROR: Linux agent policy has NOT been created"
+    ERRORCNT=$((${ERRORCNT}+1))
+fi
+
+#create a Windows agent policy
+WINPLC_RESP=$(curl -X POST "https://${IPADDR}:${KIBPORT}/api/fleet/agent_policies?sys_monitoring=true" --cacert "${DEFDIR}ssl/ca/ca.crt" -u "elastic:${SUPPASS}" -H "Content-Type: application/json" -H "kbn-xsrf: true" -d '{ "name": "windows-agents-default", "description": "The default policy to for use with Windows Elastic Agents", "namespace": "default", "monitoring_enabled": ["logs", "metrics"], "inactivity_timeout": 1209600, "is_protected": false}')
+if [[ "${WINPLC_RESP}" == *"\"updated_by\":"* ]]; then
+    infu "Windows agent policy succesfully created"
+else
+    infu "ERROR: Windows agent policy has NOT been created"
     ERRORCNT=$((${ERRORCNT}+1))
 fi
 
@@ -575,21 +575,21 @@ LNXPLC_ID=$(curl -u "elastic:${SUPPASS}" --cacert "${DEFDIR}ssl/ca/ca.crt" "http
 sed -i "/policy_id/c\\  \"policy_id\": \"${WINPLC_ID}\"," "./api-requests/add-windows-integration"
 sed -i "/policy_id/c\\  \"policy_id\": \"${LNXPLC_ID}\"," "./api-requests/add-linux-auditd-integration"
 
-#add the Windows integration to the agent policy
-WININT1_RESPT=$(curl -X POST "https://${IPADDR}:${KIBPORT}/api/fleet/package_policies" --cacert "${DEFDIR}ssl/ca/ca.crt" -u "elastic:${SUPPASS}" -H "Content-Type: application/json" -H "kbn-xsrf: true" --data "@./api-requests/add-windows-integration")
-if [[ "${WININT1_RESPT}" == *"\"updated_by\":"* ]]; then
-    infu "Windows integration succesfully added to agent policy"
-else
-    infu "ERROR: Windows integration has NOT been added to agent policy"
-    ERRORCNT=$((${ERRORCNT}+1))
-fi
-
 #add the Linux Auditd integration to the agent policy
 LNXINT1_RESPT=$(curl -X POST "https://${IPADDR}:${KIBPORT}/api/fleet/package_policies" --cacert "${DEFDIR}ssl/ca/ca.crt" -u "elastic:${SUPPASS}" -H "Content-Type: application/json" -H "kbn-xsrf: true" --data "@./api-requests/add-linux-auditd-integration")
 if [[ "${LNXINT1_RESPT}" == *"\"updated_by\":"* ]]; then
     infu "Linux Auditd integration succesfully added to agent policy"
 else
     infu "ERROR: Linux Auditd integration has NOT been added to agent policy"
+    ERRORCNT=$((${ERRORCNT}+1))
+fi
+
+#add the Windows integration to the agent policy
+WININT1_RESPT=$(curl -X POST "https://${IPADDR}:${KIBPORT}/api/fleet/package_policies" --cacert "${DEFDIR}ssl/ca/ca.crt" -u "elastic:${SUPPASS}" -H "Content-Type: application/json" -H "kbn-xsrf: true" --data "@./api-requests/add-windows-integration")
+if [[ "${WININT1_RESPT}" == *"\"updated_by\":"* ]]; then
+    infu "Windows integration succesfully added to agent policy"
+else
+    infu "ERROR: Windows integration has NOT been added to agent policy"
     ERRORCNT=$((${ERRORCNT}+1))
 fi
 
