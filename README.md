@@ -97,12 +97,13 @@ PS C:\Users\jmenouzivatele\Downloads\Sysmon> .\Sysmon64.exe -i- accepteula
 Tímto se automaticky nainstaluje balíček Sysmon, který je také rovnou nastaven na automatické spuštění při startu systému. Zda-li je spuštěn lze zkontrolovat za pomocí Windows aplikace „Services“.
 
 Aplikace Elastic Agent je následně u zařízení s operačním systémem Windows nainstalována v C:\Program Files\Elastic\Agent\ a u zařízení s operačním systémem Linux se za využití instalace skrze Linux tarball nachází v /opt/Elastic/Agent/. V této hlavní složce je třeba vytvořit složku pro soubory certifikátů „certs“ (pro správné fungování musí být jméno zcela shodné). Před kopírováním konfiguračních souborů je také třeba se ujistit, že je služba Elastic Agent vypnutá.
+
 Po vytvoření složky pro certifikáty je již možné začít kopírovat potřebné soubory z centrálního zařízení se systémem na koncová zařízení s agenty. Ti potřebují následující soubory:
 Soubor	            Cesta na centrálním zařízení	           Cesta na agentovi
 ===================================================================================
-ca.crt	            /opt/ess-install/ssl/ca/	               Podložka certs
-es-agent.crt	      /opt/ess-install/ssl/agents/es-agent/	   Podložka certs
-es-agent.key	      /opt/ess-install/ssl/agents/es-agent/	   Podložka certs
+ca.crt	             /opt/ess-install/ssl/ca/	                Podložka certs
+es-agent.crt	       /opt/ess-install/ssl/agents/es-agent/	   Podložka certs
+es-agent.key	       /opt/ess-install/ssl/agents/es-agent/	   Podložka certs
 elastic-agent.yml  	/opt/ess-install/agents/jmenointegrace/	 Hlavní složka aplikace
 
 Pro přenos souborů mezi zařízeními lze zvolit jakoukoliv vyhovující metodu přenosu. Jedno z možných řešení pro přesunutí těchto souborů je využití protokolu SCP, který využívá SSH připojení. Pokud je mezi oběma potřebnými zařízeními zřízeno SSH spojení, je možné využít následujících příkazů. 
