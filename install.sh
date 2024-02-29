@@ -390,7 +390,7 @@ fi
 /usr/share/elasticsearch/bin/elasticsearch-certutil cert --ca-cert "${DEFDIR}ssl/ca/ca.crt" --ca-key "${DEFDIR}ssl/ca/ca.key" --days 1826 --name es-http --out "${DEFDIR}ssl/es-http.zip" --ip "${IPADDR}",127.0.0.1 --pem -s
 unzip -qq "${DEFDIR}ssl/es-http.zip" -d "${DEFDIR}ssl/"
 rm -f "${DEFDIR}ssl/es-http.zip"
-mv "${DEFDIR}ssl/es-http/"* /etc/elasticsearch/certs/
+mv "${DEFDIR}ssl/es-http/"* "${ESPATH}certs/"
 rmdir "${DEFDIR}ssl/es-http/"
 if [[ -f "${ESPATH}certs/es-http.crt" && -f "${ESPATH}certs/es-http.key" ]]; then
         infu "Generated Elasticsearch certificates"
@@ -403,9 +403,9 @@ fi
 /usr/share/elasticsearch/bin/elasticsearch-certutil cert --ca-cert "${DEFDIR}ssl/ca/ca.crt" --ca-key "${DEFDIR}ssl/ca/ca.key" --days 1826 --name kibana-server --out "${DEFDIR}ssl/kibana-server.zip" --ip "${IPADDR}" --pem -s
 unzip -qq "${DEFDIR}ssl/kibana-server.zip" -d "${DEFDIR}ssl/"
 rm -f "${DEFDIR}ssl/kibana-server.zip"
-mv "${DEFDIR}ssl/kibana-server/"* /etc/kibana/certs/
+mv "${DEFDIR}ssl/kibana-server/"* "${KIBPATH}certs/"
 rmdir "${DEFDIR}ssl/kibana-server/"
-cp "${DEFDIR}ssl/ca/ca.crt" /etc/kibana/certs
+cp "${DEFDIR}ssl/ca/ca.crt" "${KIBPATH}certs"
 if [[ -f "${KIBPATH}certs/kibana-server.crt" && -f "${KIBPATH}certs/kibana-server.key" ]]; then
         infu "Generated Kibana certificates"
 else
@@ -477,9 +477,9 @@ fi
 #create logstash and agent transport certificates
 /usr/share/elasticsearch/bin/elasticsearch-certutil cert --ca-cert "${DEFDIR}ssl/ca/ca.crt" --ca-key "${DEFDIR}ssl/ca/ca.key" --days 1826 --name logstash-input --out "${DEFDIR}ssl/logstash-input.zip" --ip "${IPADDR}" --pem -s
 unzip -qq "${DEFDIR}ssl/logstash-input.zip" -d "${DEFDIR}ssl/"
-mv "${DEFDIR}ssl/logstash-input/"* /etc/logstash/certs
+mv "${DEFDIR}ssl/logstash-input/"* "${LGSTPATH}certs"
 rm -f "${DEFDIR}ssl/logstash-input.zip"
-cp "${DEFDIR}ssl/ca/ca.crt" /etc/logstash/certs
+cp "${DEFDIR}ssl/ca/ca.crt" "${LGSTPATH}certs"
 if [[ -f "${LGSTPATH}certs/logstash-input.crt" && -f "${LGSTPATH}certs/logstash-input.key" ]]; then
         infu "Generated Logstash certificates"
 else
@@ -499,7 +499,7 @@ else
 fi
 
 #create the logstash keystore
-if [ ! -e "${LGSTPATH}"logstash.keystore ]; then
+if [ ! -e "${LGSTPATH}logstash.keystore" ]; then
     ./expect/create-logstash-keystore
 fi
 
@@ -508,15 +508,15 @@ fi
 ./expect/add-logstash-keystore-password "${LOGIPASS}"
 
 #create configuration files for logstash pipelines
-if [ ! -e /etc/logstash/conf.d/beats.conf ]; then
-    cp ./config-files/beats.conf /etc/logstash/conf.d/
+if [ ! -e "${LGSTPATH}conf.d/beats.conf" ]; then
+    cp ./config-files/beats.conf "${LGSTPATH}conf.d/"
     infu "Logstash Beats pipeline configuration file copied"
 else
     infu "Detected an existing Beats pipeline configuration file"
     infu "If you did explicitely modify it and want the default configuration to be used, you can find it at ${WORKDIR}config-files/beats.conf"
 fi
-if [ ! -e /etc/logstash/conf.d/agents.conf ]; then
-    cp ./config-files/agents.conf /etc/logstash/conf.d/
+if [ ! -e "${LGSTPATH}conf.d/agents.conf" ]; then
+    cp ./config-files/agents.conf "${LGSTPATH}conf.d/"
     infu "Logstash Elastic agent pipeline configuration file copied"
 else
     infu "Detected an existing Elastic agent pipeline configuration file"
