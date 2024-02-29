@@ -1,5 +1,8 @@
 Tato uživatelská dokumentace popisuje kompletní postup instalace řešení Elastic SIEM a způsob napojení koncových zařízení pro sběr dat. Součástí je také identifikace možných problémů, které by se mohly v průběhu instalačního skriptu vyskytnout včetně přístupu k potenciálním chybám v průběhu vlastní instalace.
 
+===Instalovaná služba===
+Skript v rámci instalace systému nainstaluje a nakonfiguruje tři jednotlivé programy, ze kterých se skládá základní Elastic Stack. Konkrétně se jedná o Elasticsearch, Kibana a Logstash. Všechny tyto aplikace jsou stahovány z oficiálního repositáře Elastic pro verzi 8.x za pomocí správce balíčků dnf, anebo apt-get v závislosti na distribuci OS. Toto řešení zajišťuje nainstalování nejaktuálnější možné verze těchto programů a zároveň se správce balíčků postará o správnou instalaci aplikací. V rámci těchto aplikací je také automaticky stažen balíček java, který je nutný pro jejich fungování.
+
 ===Požadavky===
 Instalační skript je určen na instalaci řešení Elastic SIEM na zařízení s operačním systémem Linux.  Veškeré součásti řešení SIEM jsou instalovány na jediné zařízení, které musí splňovat následující parametry: 
 -	Operační systém Linux distribuce založené na RedHat nebo Debian
@@ -44,7 +47,7 @@ Jako poslední je třeba zadat heslo pro hlavní administrátorský účet s ná
 Před samotným spuštěním instalace je zobrazeno dialogové okno s informací, že skript začne vykonávat vlastní instalaci. To je poslední možností přerušit instalaci, tudíž v případě nejistoty o správnosti některé ze zadaných hodnot je doporučeno skript přerušit a údaje zkontrolovat. Po zahájení instalace již skript pracuje na instalaci samostatně. Tento proces může nějakou dobu trvat, jelikož se během něj musí nainstalovat všechny aplikace. Pro případy, kdy nastane během instalace nějaký problém slouží součást dokumentace "Chybové stavy".
  
 ===Po dokončení práce skriptu===
-Zobrazením textu "The script has succesfully completed the Elastic SIEM installation process" skript oznamuje úspěšné dokončení instalace hlavních služeb. V případě vypsání upozornění “WARNING: The installation encountered x errors during the installation process“ je třeba postupovat dle postupů v kapitole 4.3. 
+Zobrazením textu "The script has succesfully completed the Elastic SIEM installation process" skript oznamuje úspěšné dokončení instalace hlavních služeb. V případě vypsání upozornění “WARNING: The installation encountered x errors during the installation process“ je třeba postupovat dle postupů v části dokumentace "Chybové stavy". 
 Pro fungování aplikace je potřeba ještě povolit používané porty ve firewallu. Konkrétně je potřeba trvale povolit porty TCP 5044, 5055 a port, který jsme si zvolili pro webové rozhraní.
 Přístup do webového rozhraní je zpřístupněný skrze internetový prohlížeč na adrese https://zvolena-ip-adresa:zvoleny-port-pro-web-rozhrani. Při prvním přístupu bude prohlížeč varovat před nebezpečím, jelikož skript využívá vlastně vygenerované certifikáty, u kterých prohlížeč nezná jejich certifikační autoritu, kterou skript vygeneroval. Můžeme tedy toto upozornění ignorovat.
 Pro přístup do webového rozhraní slouží základní uživatel elastic s heslem, které bylo zvoleno v průběhu instalace. Pro vytváření dalších uživatelů je již možné využít přímo webového rozhraní Kibana. Po prvním přihlášení se také systém může zeptat, jestli má uživatel zájem o to přidat integrace. V tomto případě zvolíme možnost „I will explore on my own“.
@@ -127,10 +130,10 @@ Po výskytu chyby “ERROR: jmenouzivatele password has not been created.“ je 
 
 Další možné chyby již průběh instalačního skriptu nezastaví a skript pouze po dokončení svojí činnosti vypíše, že v průběhu práce skriptu se naskytla chyba. Pro zjištění konkrétní chyby je třeba následně využít souboru /opt/ess-install/ess-install.log nebo upozornění vypsaných v terminálu k nalezení jejich přesné podoby.
 
-Chybová hláška "ERROR: jmenosluzby certificates have NOT been generated" se naskytne při problému s generováním certifikátu pro určité služby. V takovém případě je třeba chybějící certifikáty doplnit ručně ve formátu popsaném v kapitole 5.1.7 dle postupu v kapitole 4.4.4.
+Chybová hláška "ERROR: jmenosluzby certificates have NOT been generated" se naskytne při problému s generováním certifikátu pro určité služby. V takovém případě je třeba chybějící certifikáty doplnit ručně ve formátu popsaném v kapitole "Šifrování komunikace za pomoci SSL" dle postupu v kapitole "Generování nových SSL certifikátů".
 
 Chybová hláška "ERROR: jmenopolitiky agent policy has NOT been created" nebo “ERROR: jmenointegrace integration has NOT been added to agent policy“ značí, že při průběhu instalačního skriptu nastala chyba při vytváření politik pro agenty, případně při přidávání integrací do těchto politik. 
-Prvním možným řešením je využít předem vytvořené konfigurace agentů obsažené v instalační složce skriptu ve složce config-files/jmenointegrace-agents a následně pozměnit IP adresu dle postupu na konci kapitoly 4.2.5. Druhou možností je tyto politiky s integracemi vytvořit manuálně. To lze učinit skrze rozhraní ukázané na Obrázek 32 pomocí tlačítka “Create agent policy“ a vytvořenou politiku následně rozkliknout, čímž se dostaneme do rozhraní ukázané v Obrázek 33. Zde je již možné přidat integraci Windows, nebo Auditd Logs (pro Linux agenty) tlačítkem “Add integration“. Tím je politika pro agenty vytvořena.
+Prvním možným řešením je využít předem vytvořené konfigurace agentů obsažené v instalační složce skriptu ve složce config-files/jmenointegrace-agents a následně pozměnit IP adresu dle postupu pro vytváření konfiguračních souborů pro agenty. Druhou možností je tyto politiky s integracemi vytvořit manuálně. To lze učinit skrze rozhraní pro správu politik agentů pomocí tlačítka “Create agent policy“ a vytvořenou politiku následně rozkliknout, čímž se dostaneme do rozhraní pro správu politiky. Zde je již možné přidat integraci Windows, nebo Auditd Logs (pro Linux agenty) tlačítkem “Add integration“. Tím je politika pro agenty vytvořena.
 
 Chybová hláška "ERROR: Logstash internal user has NOT been created" nebo "ERROR: Logstash writer role has NOT been created" značí problém s vytvářením interního logstash uživatele a jeho role. V takovém případě je třeba jej vytvořit manuálně skrze webové rozhraní Kibana za pomoci postupu v sekci Configuring Logstash to use basic authentication v následující části oficiální dokumentace: https://www.elastic.co/guide/en/logstash/current/ls-security.html.
 
@@ -146,3 +149,43 @@ Tyto složky obsahují samotná data aplikací, včetně veškerých uložených
 /var/lib/kibana
 
 Pro odinstalování agenta z koncového zařízení slouží následující část oficiální dokumentace Elastic: https://www.elastic.co/guide/en/fleet/current/uninstall-elastic-agent.html
+
+===Šifrování komunikace za pomoci SSL===
+Další součástí nastavení zabezpečení, kterou skript vykonává, je konfigurace šifrování síťového provozu mezi částmi systému za použití self-signed SSL certifikátů. Pro tyto účely disponuje Elasticsearch nástrojem elasticsearch certutil pro generování vlastních self-signed SSL náležitostí, jehož funkcí skript využívá. Skript tak vygeneruje vlastní certifikační autoritu, která poté podepisuje veškeré potřebné certifikáty. Tyto certifikáty jsou vytvářeny na dobu 5 let a některé musí mít definované IP adresy, které figurují v komunikaci, jako SAN hodnotu certifikátu. Skript generuje tyto certifikáty a certifikační autority:
+
+Účel	IP adresy	Název souborů	                                                            Umístění
+certifikační autorita	-	ca.crtca.key	                                                    /opt/ess-install/ssl/ca/
+komunikace na Elasticsearch API	127.0.0.1, IP adresa centrálního serveru	es-http.crt
+                                                                         es-http.key	    /etc/elasticsearch/certs/
+komunikace mezi internetovým prohlížečem a webovou aplikací Kibana	IP adresa centrálního serveru	kibana-server.crt
+kibana-server.key	/etc/kibana/certs/
+komunikace s nástrojem Logstash (strana serveru)	IP adresa centrálního serveru	logstash-input.crt
+logstash-input.key	/etc/logstash/certs/
+komunikace s nástrojem Logstash (strana zdroje dat)	-	es-agent.crt
+es-agent.key	/opt/ess-install/ssl/agents/es agent/
+
+
+Je důležité poznamenat, že tyto certifikáty neobsahují SAN hodnotu pro DNS názvy zařízení. V případě potřeby využívat identifikace zařízení za pomoci DNS pojmenování je třeba změnit nastavení řešení a potřebné certifikáty vygenerovat znova.
+Tyto certifikáty jsou také využívány pro zašifrovanou komunikaci mezi sběrači dat z koncových zařízení (agenty) a nástrojem Logstash. Zde je používána oboustranná autentizace, kde se za pomocí certifikátu musí prokázat jak cíl pro zasílání dat (Logstash), tak jejich zdroj (agenti). Toto řešení zvyšuje míru zabezpečení, kdy pro zasílání dat je třeba disponovat správnými soubory certifikátů pro ověření. Je však třeba zmínit, že za účelem zjednodušení procesu nasazování agentů na koncová zařízení a jejich správy je u veškerých agentů využívána pouze jediná shodná sada certifikátu a klíče. Toto platí jak pro vstupy dat ze sběračů Elastic Agent, tak ze sběračů Beats.
+
+===Generování nových SSL certifikátů===
+Základním způsobem získání SSL certifikátů potřebných pro fungování systému je terminálový nástroj elasticsearch-certutil, který je součástí instalace aplikace Elasticsearch. Tento nástroj lze nalézt na: /usr/share/elasticsearch/bin/elasticsearch-certutil.
+Tento skript může generovat různé typy SSL souborů, pro případ generování nových certifikátů slouží možnost cert. Při využití v této instalaci budou mít veškeré příkazy pro generování certifikátů následnou strukturu:
+
+[root@server]# /usr/share/elasticsearch/bin/elasticsearch-certutil cert --ca-cert /opt/ess-install/ssl/ca/ca.crt --ca-key /opt/ess-install/ssl/ca/ca.key --days 1826 --name JMENOCERTIFIKATU --out /opt/ess-install/ssl/JMENOCERTIFIKATU.zip --pem
+
+Do tohoto příkazu je třeba přidat parametr --ip IPADRESA, pokud je třeba aby generovaný certifikát měl přidělenou IP adresu nebo parametr --dns DNSJMENO pro přidělení DNS jména k certifikátu. Certifikáty, které mají tento údaj obsahovat jsou popsány v kapitole "Šifrování komunikace za pomoci SSL". Pro použití je třeba nahradit hodnoty JMENOCERTIFIKÁTU vlastní hodnotou, nejlépe shodnou s původními názvy dle popisu v kapitole "Šifrování komunikace za pomoci SSL". Tato hodnota slouží především k organizaci, tudíž tolik nezáleží na její přesné podobě. Je důležité využít možnosti --pem umístěné na konci příkazu pro zachování správného formátu certifikátů.
+Tento certifikát je následně vygenerován ve formě ZIP souboru, který je uložený ve složce /opt/ess-install/ssl/. Tento soubor je třeba extrahovat a soubory, které obsahuje přesunout na příslušné místo dle popisu v kapitole "Šifrování komunikace za pomoci SSL". Následně je třeba restartovat veškeré služby, pro které byl certifikát změněn.
+
+===Změna hesel pro interní uživatele===
+Pro interní komunikaci mezi jednotlivými aplikacemi jsou využíváni interní uživatelé, pro které je během instalace automaticky vygenerováno náhodné heslo. Tito uživatelé jsou u konfigurace instalované za pomoci instalačního skriptu kibana_system pro komunikaci aplikace Kibana s databází Elasticsearch a logstash_internal pro komunikaci mezi nástrojem Logstash s databází Elasticsearch. Ke změně některého z těchto hesel je třeba využít následující příkaz:
+
+[root@server]# /usr/share/elasticsearch/bin/elasticsearch-reset-password -i -b -u JMENOUZIVATELE
+
+Po samotné změně hesel pro tyto uživatele je dále potřeba tato hesla změnit v cílových aplikacích, které tyto uživatele využívají. Tato data jsou uložena na zabezpečeném místě, které se nazývá keystore. Pro změnu hesel využijte následující příkazy a následně nechte přepsat původní hodnotu.
+
+Pro přepsání hesla uživatele kibana_system v kibana keystore:
+[root@server ]# /usr/share/logstash/bin/logstash-keystore --path.settings /etc/logstash add ES_PWD
+
+Pro přepsání hesla uživatele logstash_internal v logstash keystore:
+[root@server ]# /usr/share/kibana/bin/kibana-keystore add elasticsearch.password
