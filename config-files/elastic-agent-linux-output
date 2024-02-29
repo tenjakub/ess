@@ -2,6 +2,6 @@ outputs:
   default:
     type: logstash
     hosts: ["<YOUR_SERVER_IP_HERE>:5055"]
-    ssl.certificate_authorities: ["/opt/elastic-agent/certs/ca.crt"]
-    ssl.certificate: "/opt/elastic-agent/certs/es-agent.crt"
-    ssl.key: "/opt/elastic-agent/certs/es-agent.key"
+    ssl.certificate_authorities: ["/opt/Elastic/Agent/certs/ca.crt"]
+    ssl.certificate: "/opt/Elastic/Agent/certs/es-agent.crt"
+    ssl.key: "/opt/Elastic/Agent/certs/es-agent.key"
