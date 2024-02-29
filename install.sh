@@ -162,7 +162,7 @@ REPEAT=1
 INP_ERR=""
 
 while [ "${REPEAT}" == "1" ]; do
-    IPADDR=$(whiptail --inputbox "Enter the server IPv4 address you want the Elastic SIEM application to operate on.\n${INP_ERR}" 9 78 "" --title "SET IP ADDRESS" 3>&1 1>&2 2>&3)
+    IPADDR=$(whiptail --inputbox "Enter the server IPv4 address you want the Elastic SIEM application to operate on. Please make sure, that this IP address is available on the system. Otherwise the appliactions will not run properly.\n${INP_ERR}" 9 78 "" --title "SET IP ADDRESS" 3>&1 1>&2 2>&3)
     exitstatus=$?
 
     if [ $exitstatus = 0 ]; then
@@ -244,7 +244,7 @@ else
 fi
 
 #inform the user that the installation is about to begin
-if ! whiptail --title "INSTALLATION ABOUT TO START" --yesno "The installation is about to start, and it cannot be terminated from now on.\nDo you want to continue?" 12 78; then
+if ! whiptail --title "INSTALLATION ABOUT TO START" --yesno "The installation is about to start. The installation process cannot be terminated from now on. If you are unsure about the validity of enetered details, it is reccomended to restart the script and make sure they have been set correctly.\nDo you want to continue?" 12 78; then
     infu "User chose to exit the installation process"
     exit 100
 fi
